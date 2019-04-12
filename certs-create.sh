@@ -16,7 +16,7 @@ then
 fi
 
 openssl genrsa -out tmp/rootCA.key 2048
-openssl req -x509 -new -nodes -key tmp/rootCA.key -sha256 -days 1024 -out tmp/rootCA.pem -subj /CN=$HOSTNAME
+openssl req -x509 -new -nodes -key tmp/rootCA.key -sha256 -days 1024 -out tmp/rootCA.pem -subj /CN=$1
 
 cat <<EOF | sed s/HOSTNAME/$1/g | sed s/IPADDRESS/$2/g > tmp/openssl.conf
 [req]
