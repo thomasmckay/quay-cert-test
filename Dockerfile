@@ -7,6 +7,8 @@ WORKDIR $CERTTEST
 
 RUN INSTALL_PKGS="\
         openssl \
+        wget \
+        iputils \
         " && \
     yum install -y yum-utils && \
     yum-config-manager --quiet --disable "*" >/dev/null && \
