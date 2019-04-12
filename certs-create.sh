@@ -1,11 +1,24 @@
 #!/bin/bash
 
-HOSTNAME=devel.example.com
+usage() {
+    echo "Usage: $0 \$hostname \$ip-address"
+}
+
+if [ -z "$1" ]
+then
+    usage
+    exit -1
+fi
+if [ -z "$2" ]
+then
+    usage
+    exit -1
+fi
 
 openssl genrsa -out tmp/rootCA.key 2048
-openssl req -x509 -new -nodes -key tmp/rootCA.key -sha256 -days 1024 -out tmp/rootCA.pem -subj '/CN=$HOSTNAME'
+openssl req -x509 -new -nodes -key tmp/rootCA.key -sha256 -days 1024 -out tmp/rootCA.pem -subj /CN=$HOSTNAME
 
-cat <<EOF > tmp/openssl.conf
+cat <<EOF | sed s/HOSTNAME/$1/g | sed s/IPADDRESS/$2/g > tmp/openssl.conf
 [req]
 req_extensions = v3_req
 distinguished_name = req_distinguished_name
@@ -15,16 +28,16 @@ basicConstraints = CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 subjectAltName = @alt_names
 [alt_names]
-DNS.1 = $HOSTNAME
-IP.1 = 192.168.123.230
+DNS.1 = HOSTNAME
+IP.1 = IPADDRESS
 EOF
 
 openssl genrsa -out tmp/quay.key 2048
-openssl req -new -key tmp/quay.key -out tmp/quay.csr -subj "/CN=$HOSTNAME" -config tmp/openssl.conf
+openssl req -new -key tmp/quay.key -out tmp/quay.csr -subj /CN=$1 -config tmp/openssl.conf
 openssl x509 -req -in tmp/quay.csr -CA tmp/rootCA.pem -CAkey tmp/rootCA.key -CAcreateserial -out tmp/quay.crt -days 356 -extensions v3_req -extfile tmp/openssl.conf
 
 openssl genrsa -out tmp/clair.key 2048
-openssl req -new -key tmp/clair.key -out tmp/clair.csr -subj "/CN=$HOSTNAME" -config tmp/openssl.conf
+openssl req -new -key tmp/clair.key -out tmp/clair.csr -subj /CN=$1 -config tmp/openssl.conf
 openssl x509 -req -in tmp/clair.csr -CA tmp/rootCA.pem -CAkey tmp/rootCA.key -CAcreateserial -out tmp/clair.crt -days 356 -extensions v3_req -extfile tmp/openssl.conf
 
 mkdir -p tmp
